@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Nikhil Vj" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 1: Exploratory Data Analysis</title>
+    <meta name="generator" content="Hugo 0.83.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project1/">Project 1: Exploratory Data Analysis</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><strong>After living at home for over a year, I was curious as to which degree the pandemic had changed in the US. I obtained datasets tracking COVID-19 statistics on a state level from the COVID Tracking Project (<a href="https://covidtracking.com/data/download" class="uri">https://covidtracking.com/data/download</a>), deciding to use data from Texas &amp; California because they are controlled by opposing political parties but are similar in being the most populous states of the US. This comparison is interesting to me because it can show the effects of policies and public sentiment, along with showing the development in COVID-19 prevention on a state level. I expect associations between certain dates like holidays and a spike in cases. Additionally, I expect strong associations between deaths and positive results, along with between date and positive test result numbers.</strong></p>
+<div style="page-break-after: always;"></div>
+</div>
+<div id="joiningmerging" class="section level2">
+<h2>Joining/Merging</h2>
+<pre class="r"><code>library(lubridate)
+library(tidyverse)
+library(dplyr)
+TXHis &lt;- read.csv(&quot;texas-history.csv&quot;)
+CAHis &lt;- read.csv(&quot;california-history.csv&quot;)
+tx20 &lt;- TXHis[-c(370), ]
+ca20 &lt;- CAHis
+covdata &lt;- full_join(tx20, ca20)</code></pre>
+<p><strong>I chose to combine both datasets using a full join. While both datasets contained observations from mostly the same variables, some variables were unique to one dataset. I decided to do a full join to conserve data from these unique variables. While I could not compare those observations between states, I can still observe changes in these measures through time. The only case I dropped was row 370 of the Texas dataset, which was the earliest observation date in Texas “03-03-2020”. This date was not included in California’s dataset, and so the variable date would not provide a proper variable to join by.</strong></p>
+<div style="page-break-after: always;"></div>
+</div>
+<div id="tidying-wrangling" class="section level2">
+<h2>Tidying &amp; Wrangling</h2>
+<pre class="r"><code>covdata$date &lt;- as.Date(covdata$date)
+covdata &lt;- covdata %&gt;% select(-deathConfirmed, -deathProbable, 
+    -hospitalized, -hospitalizedCumulative, -hospitalizedIncrease, 
+    -inIcuCumulative, -negative, -negativeIncrease, -negativeTestsAntibody, 
+    -negativeTestsPeopleAntibody, -negativeTestsViral, -onVentilatorCumulative, 
+    -onVentilatorCurrently, -positiveScore, -positiveTestsPeopleAntibody, 
+    -positiveTestsPeopleAntigen, -totalTestEncountersViral, -totalTestEncountersViralIncrease, 
+    -totalTestsPeopleAntibody, -totalTestsPeopleAntigen, -totalTestsPeopleViral, 
+    -totalTestsPeopleViralIncrease) %&gt;% mutate(TotalPositivity = positive/totalTestResults, 
+    RollingPositivity = ifelse(is.infinite(positiveIncrease/totalTestResultsIncrease), 
+        0, positiveIncrease/totalTestResultsIncrease))
+covdata %&gt;% arrange(desc(date)) %&gt;% summarise_if(is.numeric, 
+    list(Mean = mean, SD = sd, Variance = var, Max = max, N = n_distinct), 
+    na.rm = T) %&gt;% pivot_longer(contains(&quot;_&quot;)) %&gt;% separate(name, 
+    into = c(&quot;Variable&quot;, &quot;Stat&quot;), sep = &quot;_&quot;) %&gt;% pivot_wider(names_from = &quot;Variable&quot;, 
+    values_from = &quot;value&quot;) %&gt;% mutate_if(is.numeric, round, 3)</code></pre>
+<pre><code>## # A tibble: 5 x 20
+##   Stat   death deathIncrease hospitalizedCur… inIcuCurrently positive
+##   &lt;chr&gt;  &lt;dbl&gt;         &lt;dbl&gt;            &lt;dbl&gt;          &lt;dbl&gt;    &lt;dbl&gt;
+## 1 Mean  1.53e4          134.            6954.          2058.  9.35e 5
+## 2 SD    1.36e4          147.            4844.          1053.  9.88e 5
+## 3 Vari… 1.85e8        21647.        23466237.       1108328.  9.77e11
+## 4 Max   5.41e4         1114            22851           4971   3.50e 6
+## 5 N     7.02e2          309              646            488   7.30e 2
+## # … with 14 more variables: positiveCasesViral &lt;dbl&gt;, positiveIncrease &lt;dbl&gt;,
+## #   positiveTestsAntibody &lt;dbl&gt;, positiveTestsAntigen &lt;dbl&gt;,
+## #   positiveTestsViral &lt;dbl&gt;, recovered &lt;dbl&gt;, totalTestResults &lt;dbl&gt;,
+## #   totalTestResultsIncrease &lt;dbl&gt;, totalTestsAntibody &lt;dbl&gt;,
+## #   totalTestsAntigen &lt;dbl&gt;, totalTestsViral &lt;dbl&gt;,
+## #   totalTestsViralIncrease &lt;dbl&gt;, TotalPositivity &lt;dbl&gt;,
+## #   RollingPositivity &lt;dbl&gt;</code></pre>
+<pre class="r"><code>covdata %&gt;% select(-positiveTestsAntibody, -positiveTestsAntigen, 
+    -positiveTestsViral, -recovered, -totalTestsAntibody, -totalTestsAntigen) %&gt;% 
+    mutate(date = as.Date(date)) %&gt;% filter(date &gt; &quot;2020-06-07&quot;) %&gt;% 
+    group_by(state) %&gt;% summarise_if(is.numeric, list(Mean = mean, 
+    SD = sd, Variance = var, Max = max, N = n_distinct, Median = median), 
+    na.rm = T) %&gt;% pivot_longer(contains(&quot;_&quot;)) %&gt;% separate(name, 
+    into = c(&quot;Variable&quot;, &quot;Stat&quot;), sep = &quot;_&quot;) %&gt;% pivot_wider(names_from = &quot;Variable&quot;, 
+    values_from = &quot;value&quot;) %&gt;% mutate_if(is.numeric, round, 3)</code></pre>
+<pre><code>## # A tibble: 12 x 15
+##    state Stat   death deathIncrease hospitalizedCur… inIcuCurrently positive
+##    &lt;fct&gt; &lt;chr&gt;  &lt;dbl&gt;         &lt;dbl&gt;            &lt;dbl&gt;          &lt;dbl&gt;    &lt;dbl&gt;
+##  1 TX    Mean  1.90e4          156.            7427.          2246.  1.13e 6
+##  2 TX    SD    1.22e4          120.            3296.           798.  7.98e 5
+##  3 TX    Vari… 1.49e8        14414.        10860523.        636433.  6.37e11
+##  4 TX    Max   4.45e4          675            14218           3686   2.69e 6
+##  5 TX    N     2.72e2          197              261            189   2.73e 2
+##  6 TX    Medi… 1.73e4          126             7304           2299   8.45e 5
+##  7 CA    Mean  2.04e4          181.            8626.          2109.  1.37e 6
+##  8 CA    SD    1.32e4          184.            5936.          1260.  1.10e 6
+##  9 CA    Vari… 1.74e8        33734.        35231897.       1586524.  1.20e12
+## 10 CA    Max   5.41e4         1114            22851           4971   3.50e 6
+## 11 CA    N     2.73e2          195              262            255   2.73e 2
+## 12 CA    Medi… 1.72e4          110             6520           1801   8.81e 5
+## # … with 8 more variables: positiveCasesViral &lt;dbl&gt;, positiveIncrease &lt;dbl&gt;,
+## #   totalTestResults &lt;dbl&gt;, totalTestResultsIncrease &lt;dbl&gt;,
+## #   totalTestsViral &lt;dbl&gt;, totalTestsViralIncrease &lt;dbl&gt;,
+## #   TotalPositivity &lt;dbl&gt;, RollingPositivity &lt;dbl&gt;</code></pre>
+<p><strong>To tidy the dataset after obtaining summary values as a whole, I pivoted longer for variables including an underscore to convert the summary variables from columns into rows and their representative values. I then separated the summary variables into variable and statistic columns, which grouped observations by statistics like mean. Finally, I pivoted the dataset wider, allowing the visualization of several statistics for each variable at once. The same process was used to create summary variables for both Texas &amp; California after June 7th 2020 separately.</strong></p>
+<p><strong>To generate summary statistics by wrangling, I first selected against variables that did not appear consistently or were not measured by both states. I used mutate to generate the variables of Rolling &amp; Total COVID-19 Test Postivity as a function of positive results and testing for each day. For the overall summary where I used statistics like mean, Standard Deviation (SD), Variance, Maximum, and number of distinct observations (N), arranging allowed me to group observations by date and generate statistics using a summary of the resulting data. For the summary by state, I filtered for dates after June 7th 2020, which represented the later half of the dataset and allowed me to use data from a period of sustained COVID-19 response. After grouping the resulting data by state, I was able to summarize the statistics for each variable over the period measured for Texas &amp; California.</strong></p>
+<p><strong>An interesting result from wrangling of summary statistics was the large variance for all the variables across both summaries with the exception of TotalPositivity (0.000-0.001). This shows that all values except for Total Variance were not stable and changed through time a significant amount. Additionally, the high number of distinct readings for each variable (up to ) indicates instability in each measure, signifying that no variable was stagnant for a significant period of time. Finally, the most interesting result from creating summary statistics was the inconsistency in data recording by both states. This can clearly be seen by the maximum Rolling Positivity of 50.338 for Texas, which means 50.388x the number of tests given on Dec 12th, 2020 in Texas were positive. This is realistically impossible and exemplifies how inconsistent recording occurred in Texas as the state hurried to develop a functional COVID-19 response.</strong></p>
+<div id="correlation-matrix" class="section level3">
+<h3>Correlation Matrix</h3>
+<pre class="r"><code>cov &lt;- covdata %&gt;% select(-state, -positiveTestsAntibody, -positiveTestsAntigen, 
+    -positiveTestsViral, -recovered, -totalTestsAntibody, -totalTestsAntigen) %&gt;% 
+    mutate(date = as.numeric(date)) %&gt;% cor(use = &quot;pair&quot;)
+cov</code></pre>
+<pre><code>##                                date      death deathIncrease
+## date                     1.00000000 0.94522440     0.6270131
+## death                    0.94522440 1.00000000     0.6656562
+## deathIncrease            0.62701309 0.66565623     1.0000000
+## hospitalizedCurrently    0.60144309 0.52976843     0.6816089
+## inIcuCurrently           0.51926315 0.47587621     0.6890812
+## positive                 0.90938961 0.97826467     0.7389237
+## positiveCasesViral       0.89920323 0.96479080     0.7339200
+##                          hospitalizedCurrently inIcuCurrently   positive
+## date                                0.60144309     0.51926315 0.90938961
+## death                               0.52976843     0.47587621 0.97826467
+## deathIncrease                       0.68160893     0.68908124 0.73892374
+## hospitalizedCurrently               1.00000000     0.97085070 0.64959931
+## inIcuCurrently                      0.97085070     1.00000000 0.61534068
+## positive                            0.64959931     0.61534068 1.00000000
+## positiveCasesViral                  0.64452725     0.59119150 0.99617527
+##                          positiveCasesViral positiveIncrease totalTestResults
+## date                             0.89920323       0.58019752       0.82445431
+## death                            0.96479080       0.45250870       0.87085703
+## deathIncrease                    0.73391997       0.57271514       0.67855738
+## hospitalizedCurrently            0.64452725       0.84273121       0.61560433
+## inIcuCurrently                   0.59119150       0.76036201       0.50910438
+## positive                         0.99617527       0.55253152       0.92057778
+## positiveCasesViral               1.00000000       0.52933256       0.94167121
+##                          totalTestResultsIncrease totalTestsViral
+## date                                   0.64352691      0.82445431
+## death                                  0.56906089      0.87085703
+## deathIncrease                          0.50673527      0.67855738
+## hospitalizedCurrently                  0.70926158      0.61560433
+## inIcuCurrently                         0.56024283      0.50910438
+## positive                               0.65985700      0.92057778
+## positiveCasesViral                     0.66811209      0.94167121
+##                          totalTestsViralIncrease TotalPositivity
+## date                                  0.64351867      0.24073098
+## death                                 0.56906089      0.25308311
+## deathIncrease                         0.50673236      0.17659122
+## hospitalizedCurrently                 0.70926158      0.10160817
+## inIcuCurrently                        0.56024283      0.12710251
+## positive                              0.65985508      0.21977100
+## positiveCasesViral                    0.66811209      0.36401342
+##                          RollingPositivity
+## date                            0.02373265
+## death                           0.01678406
+## deathIncrease                   0.02735160
+## hospitalizedCurrently           0.02315536
+## inIcuCurrently                  0.02864847
+## positive                        0.01277286
+## positiveCasesViral              0.01823023
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 7 rows ]</code></pre>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div id="visualizing" class="section level2">
+<h2>Visualizing</h2>
+<div id="correlation-heatmap" class="section level3">
+<h3>Correlation Heatmap</h3>
+<pre class="r"><code>cov %&gt;% as.data.frame %&gt;% rownames_to_column %&gt;% pivot_longer(-1) %&gt;% 
+    ggplot(aes(rowname, name, fill = value)) + geom_tile() + 
+    scale_fill_gradient2(low = &quot;red&quot;, high = &quot;blue&quot;) + geom_text(aes(label = round(value, 
+    2)), color = &quot;black&quot;, size = 2.25) + xlab(&quot;&quot;) + ylab(&quot;&quot;) + 
+    theme(axis.text.x = element_text(size = 8, angle = 90, hjust = 1), 
+        axis.text.y = element_text(size = 8)) + coord_fixed() + 
+    ggtitle(&quot;Correlation Between COVID-19 Tracking Variables&quot;) + 
+    theme(plot.title = element_text(hjust = 0.5)) + xlab(&quot;Variable 2&quot;) + 
+    ylab(&quot;Variable 1&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/Heatmap-1.png" width="672" style="display: block; margin: auto;" />
+<strong>In the correlation heatmap, relationships between the variables appear to be mainly positive, with only Positivity Rates having no or negative correlation with other variables. Date and Death have a strong relationship of 0.95, which shows that as measurement date progresses, the number of deaths increase. ICU Care and Hospitalization are also highly positively correlated at 0.97, which shows that more people in hospitals as a result of COVID-19 tends to mean more people in the ICU for the same reason. Death &amp; Date also have a strong positive correlation to the number of positive cases, as they both increase as the date progresses. </strong></p>
+<p><strong>The number of tests done (totalTestResults) is also highly positively correlated with the number of positive cases (positive) at 0.92 and the Date (0.82) &amp; Death (0.87), which shows their increase through time. Rates of positive increase (positiveIncrease) is also related to hospitalization rates (hospitalizedCurrently) at 0.84 and ICU rates (inIcuCurrently) at 0.76, meaning that increased rates of positive cases implies a greater rate of hospitalization and number of ICU patients. However, an negative correlation is weak between TotalPositivity &amp; the increase in total test results (totalTestResultsIncrease). This indicates that as testing increases, rates of positivity decrease as more negative results occur.</strong></p>
+</div>
+<div id="plot-1-covid-19-positivity-rates" class="section level3">
+<h3>Plot 1: COVID-19 Positivity Rates</h3>
+<pre class="r"><code>statcov &lt;- covdata %&gt;% select(-positiveTestsAntibody, -positiveTestsAntigen, 
+    -positiveTestsViral, -recovered, -totalTestsAntibody, -totalTestsAntigen) %&gt;% 
+    mutate_if(is.numeric, round, 3)
+statcov$date &lt;- as.Date(statcov$date, format = &quot;%m/%d/%Y&quot;)
+statcov %&gt;% gather(key, value, RollingPositivity, TotalPositivity) %&gt;% 
+    ggplot(aes(x = date, y = value, alpha = key, color = state)) + 
+    geom_point(size = 1.25, shape = 1) + scale_alpha_discrete(range = c(0.25, 
+    1)) + scale_y_continuous(limits = c(0, 1), breaks = seq(0, 
+    1, 0.1)) + scale_x_date(date_breaks = &quot;2 months&quot;, date_labels = &quot;%b-%y&quot;) + 
+    theme_minimal() + ggtitle(&quot;Comparison of COVID-19 Test Positivity Rates Through Time in TX &amp; CA&quot;) + 
+    theme(plot.title = element_text(hjust = 0.45)) + xlab(&quot;Date&quot;) + 
+    ylab(&quot;Proportion&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/Plot%201-1.png" width="672" style="display: block; margin: auto;" />
+<strong>Some trends observed in this plot are the initial spike in test positivity for California at the beginning of data recording and the changes in Rolling Positivity at certain dates. The initial spike in California COVID-19 test positivity shows the low numbers of testing done and the targeting of testing towards populations suspected of COVID-19 infection. This is further explained in the leveling and drop-off of positivity rates for California after the first month of measurement. Observing the Rolling Positivity, we see spikes in the months of August 2020 along with December 2020 and January 2021. A common factor for these months is their occurrence shortly after national holidays such as Independence Day, Thanksgiving, and Christmas. This could help explain the abrupt shifts as more people saw each other and potentially unknowingly transmitted COVID-19. A final trend to observe is the distinction in overall positivity (Total Positivity) between Texas and California. This becomes clear in the month of July, where Texas surpasses a positivity rate of 10% while California stays under 10% throughout the time of data measurement.</strong></p>
+</div>
+<div id="plot-2-covid-19-outcomes" class="section level3">
+<h3>Plot 2: COVID-19 Outcomes</h3>
+<pre class="r"><code>statcov %&gt;% mutate(deathIncreasePerDay = deathIncrease) %&gt;% gather(key, 
+    value, deathIncreasePerDay, hospitalizedCurrently, inIcuCurrently) %&gt;% 
+    ggplot(aes(x = date, y = value, color = key)) + geom_line(stat = &quot;summary&quot;, 
+    fun = mean) + scale_y_continuous(limits = c(0, 14000), breaks = seq(0, 
+    14000, 1000)) + scale_x_date(date_breaks = &quot;2 months&quot;, date_labels = &quot;%b-%y&quot;) + 
+    theme_minimal() + ggtitle(&quot;Overall Relationship between COVID-19 Hospitalization, ICU Care, &amp; Death&quot;) + 
+    ylab(&quot;Number of Persons&quot;) + xlab(&quot;Date&quot;) + theme(plot.title = element_text(hjust = 0.3))</code></pre>
+<p><img src="../../project/project1_files/figure-html/Plot%202-1.png" width="672" style="display: block; margin: auto;" />
+<strong>Trends and relationships found in previous datasets are also exemplified in this plot. Sudden jumps in the lines representing the data can be explained by inconsistencies in data measurement, which can be seen in ICU patient numbers (inIcuCurrently) for July 2020, along with hospitalization numbers (hospitalizationCurrently) in March and April 2020. Another trend found in this graph is the spike for all visualized variables in July, August, and December 2020, along with January 2021. This follows along with the explanation for the previous graph, where increases in cases were seen soon after holidays such as July 4th, Thanksgiving, and Christmas, where people tend to visit each other and the potential for COVID-19 spread is high. Additionally, we also see spikes in death rates following shortly after spikes in hospitalization &amp; ICU. This follows convention, as a rise in intensive care requirements and hospitalization from COVID-19 precludes a greater numbers of deaths, not necessarily a greater proportion. Altogether, this graph supprts the data and conclusions made from previous visualizations.</strong></p>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div id="dimensionality-reduction" class="section level2">
+<h2>Dimensionality Reduction</h2>
+<div id="preparationpca" class="section level3">
+<h3>Preparation/PCA</h3>
+<pre class="r"><code>vistatcov &lt;- statcov %&gt;% select(-TotalPositivity, -RollingPositivity, 
+    -positiveCasesViral, -totalTestsViral, -totalTestsViralIncrease)
+vistatcov[is.na(vistatcov)] = 0
+cov_num &lt;- vistatcov %&gt;% select_if(is.numeric, na.rm = T) %&gt;% 
+    scale
+rownames(cov_num) &lt;- vistatcov$date
+cov_pca &lt;- princomp(cov_num)</code></pre>
+</div>
+<div id="choosing-number-of-pcs-scree-plot-kaisers-rule" class="section level3">
+<h3>Choosing Number of PCs (Scree Plot, Kaiser’s Rule)</h3>
+<pre class="r"><code>eigval &lt;- cov_pca$sdev^2
+varprop = round(eigval/sum(eigval), 2)
+ggplot() + geom_bar(aes(y = varprop, x = 1:8), stat = &quot;identity&quot;) + 
+    xlab(&quot;&quot;) + geom_path(aes(y = varprop, x = 1:8)) + geom_text(aes(x = 1:8, 
+    y = varprop, label = round(varprop, 2)), vjust = 1, col = &quot;orange&quot;, 
+    size = 5) + scale_y_continuous(breaks = seq(0, 0.6, 0.2), 
+    labels = scales::percent) + scale_x_continuous(breaks = 1:10) + 
+    ggtitle(&quot;Scree Plot for PCA of COVID-19 Data&quot;) + theme(plot.title = element_text(hjust = 0.5)) + 
+    xlab(&quot;Principal Component&quot;) + ylab(&quot;Percentage of Variance Accounted For&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/Scree%20Plot-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>eigval</code></pre>
+<pre><code>##      Comp.1      Comp.2      Comp.3      Comp.4      Comp.5      Comp.6 
+## 5.886646333 0.961576974 0.555086276 0.261925461 0.196721050 0.073096834 
+##      Comp.7      Comp.8 
+## 0.046570796 0.007536167</code></pre>
+</div>
+<div id="computationvisualization-pc-plot-plot-of-loadings" class="section level3">
+<h3>Computation/Visualization (PC Plot &amp; Plot of Loadings)</h3>
+<pre class="r"><code>covplot &lt;- statcov %&gt;% select_if(is.numeric, na.rm = T)
+statcov %&gt;% mutate(PC1 = cov_pca$scores[, 1], PC2 = cov_pca$scores[, 
+    2]) %&gt;% ggplot(aes(PC1, PC2, color = state)) + geom_point() + 
+    coord_fixed() + ggtitle(&quot;PC Plot of Relevant Principal Components in COVID-19 Data&quot;) + 
+    theme(plot.title = element_text(hjust = 0.5)) + xlab(&quot;PC1 Score&quot;) + 
+    ylab(&quot;PC2 Score&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/PC%20Plot/Plot%20of%20Loadings-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(ggrepel)
+cov_pca$loadings[1:8, 1:2] %&gt;% as.data.frame %&gt;% rownames_to_column %&gt;% 
+    ggplot() + geom_hline(aes(yintercept = 0), lty = 2) + geom_vline(aes(xintercept = 0), 
+    lty = 2) + ylab(&quot;PC2&quot;) + xlab(&quot;PC1&quot;) + geom_segment(aes(x = 0, 
+    y = 0, xend = Comp.1, yend = Comp.2), arrow = arrow(), col = &quot;red&quot;) + 
+    geom_label_repel(aes(x = Comp.1, y = Comp.2, label = rowname)) + 
+    ggtitle(&quot;PCA Plot of Loadings for Relevant Principal Components&quot;) + 
+    theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="../../project/project1_files/figure-html/PC%20Plot/Plot%20of%20Loadings-2.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="interpretation" class="section level3">
+<h3>Interpretation</h3>
+<pre class="r"><code>cov_pca$loadings</code></pre>
+<pre><code>## 
+## Loadings:
+##                          Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7
+## death                     0.351  0.480         0.358  0.184  0.165  0.368
+## deathIncrease             0.336         0.595 -0.709         0.107  0.116
+## hospitalizedCurrently     0.365 -0.393  0.115  0.150 -0.208 -0.754  0.191
+## inIcuCurrently            0.363 -0.258  0.297  0.397 -0.481  0.477 -0.304
+## positive                  0.377  0.384         0.209  0.137 -0.151  0.131
+## positiveIncrease          0.326 -0.512 -0.114         0.754  0.176 -0.130
+## totalTestResults          0.368  0.334 -0.311 -0.204        -0.216 -0.729
+## totalTestResultsIncrease  0.339 -0.154 -0.657 -0.319 -0.319  0.256  0.396
+##                          Comp.8
+## death                     0.565
+## deathIncrease                  
+## hospitalizedCurrently     0.168
+## inIcuCurrently                 
+## positive                 -0.780
+## positiveIncrease               
+## totalTestResults          0.189
+## totalTestResultsIncrease       
+## 
+##                Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7 Comp.8
+## SS loadings     1.000  1.000  1.000  1.000  1.000  1.000  1.000  1.000
+## Proportion Var  0.125  0.125  0.125  0.125  0.125  0.125  0.125  0.125
+## Cumulative Var  0.125  0.250  0.375  0.500  0.625  0.750  0.875  1.000</code></pre>
+<pre class="r"><code>summary(cov_pca, loadings = T)</code></pre>
+<pre><code>## Importance of components:
+##                           Comp.1    Comp.2     Comp.3     Comp.4    Comp.5
+## Standard deviation     2.4262412 0.9806003 0.74504112 0.51178654 0.4435325
+## Proportion of Variance 0.7368292 0.1203602 0.06947993 0.03278511 0.0246235
+## Cumulative Proportion  0.7368292 0.8571894 0.92666935 0.95945445 0.9840780
+##                             Comp.6      Comp.7       Comp.8
+## Standard deviation     0.270364262 0.215802678 0.0868111014
+## Proportion of Variance 0.009149502 0.005829248 0.0009432991
+## Cumulative Proportion  0.993227453 0.999056701 1.0000000000
+## 
+## Loadings:
+##                          Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6 Comp.7
+## death                     0.351  0.480         0.358  0.184  0.165  0.368
+## deathIncrease             0.336         0.595 -0.709         0.107  0.116
+## hospitalizedCurrently     0.365 -0.393  0.115  0.150 -0.208 -0.754  0.191
+## inIcuCurrently            0.363 -0.258  0.297  0.397 -0.481  0.477 -0.304
+## positive                  0.377  0.384         0.209  0.137 -0.151  0.131
+## positiveIncrease          0.326 -0.512 -0.114         0.754  0.176 -0.130
+## totalTestResults          0.368  0.334 -0.311 -0.204        -0.216 -0.729
+## totalTestResultsIncrease  0.339 -0.154 -0.657 -0.319 -0.319  0.256  0.396
+##                          Comp.8
+## death                     0.565
+## deathIncrease                  
+## hospitalizedCurrently     0.168
+## inIcuCurrently                 
+## positive                 -0.780
+## positiveIncrease               
+## totalTestResults          0.189
+## totalTestResultsIncrease</code></pre>
+<p><strong>The results found from PCA seem to show that the data can be combined into two principal components which explains a large amount of variability in the data (86%). I was able to obtain this measurement using a scree plot and Kaiser’s rule, which showed that two principal components accounted for the vast majority of the dataset’s variability. The principal component (PC1) is a general strength axis, while the second principal component (PC2) is an axis measuring Death (0.48) vs positiveIncrease (-0.51). This can help explain the PC plot’s W-like shape for both states. The furthest-right vertical band on the PC plot can be explained by more recent days of measurement, with large amounts of death and small numbers of cases or vice versa. Following this pattern, the furthest right horizontal band can be explained by days of high hospitalization and low increase in cases. This explains why California’s banding appears to be larger, as they had days with greater numbers of deaths but lower rates of positivity as seen in the visualized plots.</strong></p>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p><strong>In conclusion, there are some very interesting trends that are found after analysis of the data. However, I believe that more interesting correlations could have been discovered with greater collection of data, and if both states properly recorded shared statistics. We found that levels of COVID-19 and our response to it changed through time, as exhibited by the high variance seen from summary statistics. Through the graphs, we were able to visualize some of the relationships both between Texas &amp; California, and overall. We can see California’s initial positivity spike, along with Texas’s overall higher positivity rate and each state’s spikes through time. We also saw and analyzed the hospitalization, ICU, and death counts, finding spikes around holidays and a slight relative delay in death rates. Finally with the PCA data, we find that two clusters explain 86% of the variance due to strong relationships between the variables. Using the PC plot, we find again that there is a large amount of variability throughout the dataset. Future analysis of this data might reveal greater correlations for the decline of COVID-19, which might be best measured once joined with a dataset tracking vaccination rates in the US. At that time, we will also be able to compare the changes between prepared and unprepared responses to COVID-19 with the inclusion of more data.</strong></p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
