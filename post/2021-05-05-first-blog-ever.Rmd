@@ -7,14 +7,19 @@ categories: []
 tags: []
 description: ''
 ---
-I have never done this before. I've never blogged or really coded, but here's my first time giving it a shot. Over this past semester, I've learned a lot more about how to code in R and am now just beginning to learn about Python. One of the most fascinating things I've learned is that Python has its own unique way of interepreting letters and numbers, and it can even 'converse' with R when doing so. Here, let me show you!
-```{r}
+I've never blogged or really coded, but here's my first time giving it a shot. Over this past semester, I've learned a lot more about how to code in R and am now just beginning to learn about Python. One of the most fascinating things I've learned is that Python has its own unique way of interepreting letters and numbers, and it can even 'converse' with R when doing so. 
 
-```
+Here, let me show you!
 
 ```{python}
-
+first = "First line of Python code ever!!!"
+first[0:]
 ```
+Thanks to Python & R for always having something new and interesting for me each day!
+
+![](https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg)
+![](https://www.rstudio.com/wp-content/uploads/2018/10/RStudio-Logo-Flat.png)
+
 Feel free to take a look at some of my other work:
 
 [Project 1](/project/project1/)
