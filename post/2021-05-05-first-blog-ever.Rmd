@@ -40,7 +40,7 @@ y=np.random.normal(0,1,25)
 ```{r}
 #R code chunk
 library(ggplot2)
-ggplot()+geom_point(aes(py$x,py$y))+xlab("X")+ylab("Y")
+ggplot()+geom_point(aes(py$x,py$y))+xlab("X")+ylab("Y")+ggtitle("Plotting Python Points in R")
 ```
 
 Thanks to Python & R for always having something new and interesting for me each day!
