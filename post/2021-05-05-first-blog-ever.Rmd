@@ -12,9 +12,37 @@ I've never blogged or really coded, but here's my first time giving it a shot. O
 Here, let me show you!
 
 ```{python}
+#Python code chunk
 first = "First line of Python code ever!!!"
 first[0:]
 ```
+Now let's transition from R to Python seamlessly.
+```{r}
+#R code chunk
+library(reticulate)
+matplotlib <- import("matplotlib")
+matplotlib$use("Agg", force = TRUE)
+rp<-"Printing R objects in Python"
+```
+```{python}
+#Python code chunk
+print(r.rp)
+```
+Now let's do it the other way around.
+```{python}
+#Python code chunk
+import numpy as np
+import matplotlib.pyplot as plt
+x=np.random.normal(0,5,25)
+y=np.random.normal(0,1,25)
+```
+
+```{r}
+#R code chunk
+library(ggplot2)
+ggplot()+geom_point(aes(py$x,py$y))+xlab("X")+ylab("Y")
+```
+
 Thanks to Python & R for always having something new and interesting for me each day!
 
 ![](https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg)

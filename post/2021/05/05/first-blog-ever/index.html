@@ -74,9 +74,29 @@
 
 <p>I’ve never blogged or really coded, but here’s my first time giving it a shot. Over this past semester, I’ve learned a lot more about how to code in R and am now just beginning to learn about Python. One of the most fascinating things I’ve learned is that Python has its own unique way of interepreting letters and numbers, and it can even ‘converse’ with R when doing so.</p>
 <p>Here, let me show you!</p>
-<pre class="python"><code>first = &quot;First line of Python code ever!!!&quot;
+<pre class="python"><code>#Python code chunk
+first = &quot;First line of Python code ever!!!&quot;
 first[0:]</code></pre>
 <pre><code>## &#39;First line of Python code ever!!!&#39;</code></pre>
+<p>Now let’s transition from R to Python seamlessly.</p>
+<pre class="r"><code>#R code chunk
+library(reticulate)
+matplotlib &lt;- import(&quot;matplotlib&quot;)
+matplotlib$use(&quot;Agg&quot;, force = TRUE)
+rp&lt;-&quot;Printing R objects in Python&quot;</code></pre>
+<pre class="python"><code>#Python code chunk
+print(r.rp)</code></pre>
+<pre><code>## Printing R objects in Python</code></pre>
+<p>Now let’s do it the other way around.</p>
+<pre class="python"><code>#Python code chunk
+import numpy as np
+import matplotlib.pyplot as plt
+x=np.random.normal(0,5,25)
+y=np.random.normal(0,1,25)</code></pre>
+<pre class="r"><code>#R code chunk
+library(ggplot2)
+ggplot()+geom_point(aes(py$x,py$y))+xlab(&quot;X&quot;)+ylab(&quot;Y&quot;)</code></pre>
+<p><img src="../../../../../post/2021-05-05-first-blog-ever_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
 <p>Thanks to Python &amp; R for always having something new and interesting for me each day!</p>
 <p><img src="https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg" />
 <img src="https://www.rstudio.com/wp-content/uploads/2018/10/RStudio-Logo-Flat.png" /></p>
