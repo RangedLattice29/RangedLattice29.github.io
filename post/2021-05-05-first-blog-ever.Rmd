@@ -7,7 +7,7 @@ categories: []
 tags: []
 description: ''
 ---
-I have never done this before.
+I have never done this before. I've never blogged or really coded, but here's my first time giving it a shot. Over this past semester, I've learned a lot more about how to code in R and am now just beginning to learn about Python. One of the most fascinating things I've learned is that Python has its own unique way of interepreting letters and numbers, and it can even 'converse' with R when doing so. Here, let me show you!
 ```{r}
 
 ```
@@ -15,5 +15,8 @@ I have never done this before.
 ```{python}
 
 ```
+Feel free to take a look at some of my other work:
 
-[Link to project 1](/project/project1/)
+[Project 1](/project/project1/)
+
+[Project 2](/project/project2/)
